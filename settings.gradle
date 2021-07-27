@@ -1,0 +1,3 @@
+rootProject.name = "WifiUtils"
+include ':app'
+include ':wifilib'
