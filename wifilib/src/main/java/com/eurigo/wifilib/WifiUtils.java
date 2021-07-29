@@ -149,7 +149,7 @@ public class WifiUtils {
                     }
                 }
                 // 7.1以下设备使用反射连接，以上使用ConnectivityManager
-                if (Build.VERSION.SDK_INT <= N_MR1) {
+                if (Build.VERSION.SDK_INT < N_MR1) {
                     wifiManager.disableNetwork(wifiManager.getConnectionInfo().getNetworkId());
                     int netId = wifiManager.addNetwork(getWifiConfig(ssid, password, !TextUtils.isEmpty(password)));
                     wifiManager.enableNetwork(netId, true);
@@ -232,7 +232,6 @@ public class WifiUtils {
             if (wifiManager == null) {
                 wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
             }
-            // 6.0+系统需要获取修改设置权限
             try {
                 // 热点的配置类
                 WifiConfiguration config = new WifiConfiguration();
