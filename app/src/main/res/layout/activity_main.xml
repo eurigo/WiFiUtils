@@ -12,10 +12,9 @@
         android:id="@+id/et_wifi_ssid"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:hint="要传输WIFI SSID"
-        android:text="LUKE-OFFICE"
+        android:hint="WIFI SSID"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btn_open_ap"
+        app:layout_constraintBottom_toTopOf="@+id/btn_use_ap"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/et_wifi_pwd"
         android:background="@null"
@@ -29,10 +28,9 @@
         android:id="@+id/et_wifi_pwd"
         android:layout_width="0dp"
         android:layout_height="50dp"
-        android:hint="要传输WIFI 密码"
-        android:text="luke2020"
+        android:hint="WIFI 密码"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/btn_open_ap"
+        app:layout_constraintBottom_toTopOf="@+id/btn_use_ap"
         app:layout_constraintStart_toEndOf="@+id/et_wifi_ssid"
         app:layout_constraintEnd_toEndOf="parent"
         android:background="@null"
@@ -43,47 +41,36 @@
         android:layout_marginTop="6dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_open_ap"
+        android:id="@+id/btn_use_ap"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="打开热点"
         app:layout_constraintTop_toBottomOf="@+id/et_wifi_pwd"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_connect_ap"
+        app:layout_constraintEnd_toStartOf="@+id/btn_use_wifi"
         android:backgroundTint="@android:color/holo_blue_light"
         app:layout_constraintVertical_chainStyle="packed"
         android:layout_marginHorizontal="5dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_connect_ap"
+        android:id="@+id/btn_use_wifi"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="连接热点"
+        android:text="打开WiFi"
         app:layout_constraintTop_toBottomOf="@+id/et_wifi_pwd"
-        app:layout_constraintStart_toEndOf="@+id/btn_open_ap"
+        app:layout_constraintStart_toEndOf="@+id/btn_use_ap"
         app:layout_constraintEnd_toEndOf="parent"
         android:backgroundTint="@android:color/holo_blue_light"
         android:layout_marginHorizontal="5dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_send_data"
+        android:id="@+id/btn_connect"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="传输WIFI数据"
-        app:layout_constraintTop_toBottomOf="@+id/btn_open_ap"
+        android:text="连接热点/WiFi"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_start_receive"
-        android:backgroundTint="@android:color/holo_blue_light"
-        android:layout_marginHorizontal="5dp" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_start_receive"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="开始接收"
-        app:layout_constraintTop_toBottomOf="@+id/btn_open_ap"
-        app:layout_constraintStart_toEndOf="@+id/btn_send_data"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btn_use_ap"
         android:backgroundTint="@android:color/holo_blue_light"
         android:layout_marginHorizontal="5dp" />
 
@@ -91,7 +78,7 @@
         android:id="@+id/rcv_ap_log"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/btn_send_data"
+        app:layout_constraintTop_toBottomOf="@+id/btn_connect"
         app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
