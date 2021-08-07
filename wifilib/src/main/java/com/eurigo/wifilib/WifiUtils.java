@@ -1,5 +1,13 @@
 package com.eurigo.wifilib;
 
+import static android.content.Context.WIFI_SERVICE;
+import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
+import static android.os.Build.VERSION_CODES.M;
+import static android.os.Build.VERSION_CODES.N_MR1;
+import static android.os.Build.VERSION_CODES.O;
+import static android.os.Build.VERSION_CODES.P;
+import static android.os.Build.VERSION_CODES.Q;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -37,13 +45,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static android.content.Context.WIFI_SERVICE;
-import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N_MR1;
-import static android.os.Build.VERSION_CODES.O;
-import static android.os.Build.VERSION_CODES.P;
-import static android.os.Build.VERSION_CODES.Q;
 
 /**
  * @author Eurigo
@@ -287,6 +288,24 @@ public class WifiUtils {
     }
 
     /**
+     * 是否连接着指定WiFi,通过已连接的SSID判断
+     */
+    @RequiresApi(JELLY_BEAN_MR1)
+    public boolean isConnectedSpecifySsid(Context context, String ssid) {
+        return ssid.equals(getSsid(context));
+    }
+
+    /**
+     * 获取当前WiFi名称
+     */
+    public String getSsid(Context context) {
+        if (wifiManager == null) {
+            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+        }
+        return wifiManager.getConnectionInfo().getSSID();
+    }
+
+    /**
      * 获取WiFi列表
      *
      * @return WIFI列表
@@ -433,13 +452,13 @@ public class WifiUtils {
         }
         ConnectivityManager connectivityManager = (ConnectivityManager)
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
-                .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
-                .setWpa2Passphrase(password)
-                .build();
         // 创建一个请求
         NetworkRequest request;
-        if (Build.VERSION.SDK_INT > N_MR1) {
+        if (Build.VERSION.SDK_INT >= Q) {
+            NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
+                    .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
+                    .setWpa2Passphrase(password)
+                    .build();
             request = new NetworkRequest.Builder()
                     // 创建的是WIFI网络。
                     .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
