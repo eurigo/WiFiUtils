@@ -513,7 +513,7 @@ public class WifiUtils {
     }
 
     public boolean isRegisterWifiBroadcast() {
-        return wifiReceiver.getWifiStateListener() != null;
+        return isWifiReceiverRegister;
     }
 
     /**
