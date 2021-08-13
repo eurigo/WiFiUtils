@@ -3,7 +3,6 @@ package com.eurigo.wifilib;
 import static android.content.Context.WIFI_SERVICE;
 import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.M;
-import static android.os.Build.VERSION_CODES.N_MR1;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
 import static android.os.Build.VERSION_CODES.Q;
@@ -59,6 +58,8 @@ public class WifiUtils {
     private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
 
     private final WifiReceiver wifiReceiver = new WifiReceiver();
+
+    private boolean isWifiReceiverRegister = false;
 
     private WifiManager wifiManager;
 
@@ -150,7 +151,7 @@ public class WifiUtils {
                     }
                 }
                 // 7.1以下设备使用反射连接，以上使用ConnectivityManager
-                if (Build.VERSION.SDK_INT < N_MR1) {
+                if (Build.VERSION.SDK_INT < Q) {
                     wifiManager.disableNetwork(wifiManager.getConnectionInfo().getNetworkId());
                     int netId = wifiManager.addNetwork(getWifiConfig(ssid, password, !TextUtils.isEmpty(password)));
                     wifiManager.enableNetwork(netId, true);
@@ -445,7 +446,7 @@ public class WifiUtils {
      * @param ssid     wifi名称
      * @param password wifi密码
      */
-    @RequiresApi(api = N_MR1)
+    @RequiresApi(api = Q)
     private void connect(Context context, String ssid, String password) {
         if (isGrantedWriteSettings(context)) {
             requestWriteSettings(context);
@@ -453,31 +454,19 @@ public class WifiUtils {
         ConnectivityManager connectivityManager = (ConnectivityManager)
                 context.getSystemService(Context.CONNECTIVITY_SERVICE);
         // 创建一个请求
-        NetworkRequest request;
-        if (Build.VERSION.SDK_INT >= Q) {
-            NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
-                    .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
-                    .setWpa2Passphrase(password)
-                    .build();
-            request = new NetworkRequest.Builder()
-                    // 创建的是WIFI网络。
-                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                    // 网络不受限
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                    // 信任网络，增加这个参数让设备连接wifi之后还联网。
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED)
-                    .setNetworkSpecifier(specifier)
-                    .build();
-        } else {
-            request = new NetworkRequest.Builder()
-                    // 创建的是WIFI网络。
-                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                    // 网络不受限
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                    // 信任网络，增加这个参数让设备连接wifi之后还联网。
-                    .addCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED)
-                    .build();
-        }
+        NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
+                .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
+                .setWpa2Passphrase(password)
+                .build();
+        NetworkRequest request = new NetworkRequest.Builder()
+                // 创建的是WIFI网络。
+                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                // 网络不受限
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
+                // 信任网络，增加这个参数让设备连接wifi之后还联网。
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED)
+                .setNetworkSpecifier(specifier)
+                .build();
         connectivityManager.requestNetwork(request, new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
@@ -537,14 +526,17 @@ public class WifiUtils {
         filter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
         context.registerReceiver(wifiReceiver, filter);
         wifiReceiver.setWifiStateListener(wifiStateListener);
+        isWifiReceiverRegister = true;
     }
 
     /**
      * 解除Wifi广播
      */
     public void unregisterWifiBroadcast(Context context) {
-        wifiReceiver.setWifiStateListener(null);
-        context.unregisterReceiver(wifiReceiver);
+        if (isWifiReceiverRegister) {
+            wifiReceiver.setWifiStateListener(null);
+            context.unregisterReceiver(wifiReceiver);
+        }
     }
 
 }
