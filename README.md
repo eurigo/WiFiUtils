@@ -66,3 +66,11 @@ WifiUtils.getInstance().openAp(Context Context context, String ssid, String pass
 ```
 WifiUtils.getInstance().closeAp(Context context);
 ```
++ #### 注册Wifi广播
+```
+WifiUtils.getInstance().registerWifiBroadcast(Context context, WifiStateListener wifiStateListener);
+```
++ #### 获取当前WiFi名称
+```
+WifiUtils.getInstance().getSsid(Context context);
+```
