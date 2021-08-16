@@ -1,7 +1,6 @@
 package com.eurigo.wifilib;
 
 import static android.content.Context.WIFI_SERVICE;
-import static android.os.Build.VERSION_CODES.JELLY_BEAN_MR1;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
@@ -291,17 +290,25 @@ public class WifiUtils {
     /**
      * 是否连接着指定WiFi,通过已连接的SSID判断
      */
-    @RequiresApi(JELLY_BEAN_MR1)
     public boolean isConnectedSpecifySsid(Context context, String ssid) {
         return ssid.equals(getSsid(context));
     }
 
     /**
      * 获取当前WiFi名称
+     *
+     * @return 返回不含双引号的SSID
      */
     public String getSsid(Context context) {
         if (wifiManager == null) {
             wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+        }
+        String ssid = wifiManager.getConnectionInfo().getSSID();
+        if (ssid.equals(WifiManager.UNKNOWN_SSID)) {
+            return "";
+        }
+        if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+            return ssid.subSequence(1, ssid.length() - 1).toString();
         }
         return wifiManager.getConnectionInfo().getSSID();
     }
