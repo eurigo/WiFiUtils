@@ -1,9 +1,10 @@
 package com.eurigo.wifiutils;
 
+import static android.os.Build.VERSION_CODES.Q;
+
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -22,8 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-
-import static android.os.Build.VERSION_CODES.Q;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener
         , WifiReceiver.WifiStateListener {
@@ -111,12 +110,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btn_connect:
-                if (TextUtils.isEmpty(etSsid.getText()) || TextUtils.isEmpty(etSsid.getText())) {
-                    ToastUtils.showShort("WiFi名或密码不能为空");
-                    return;
-                }
-                WifiUtils.getInstance().connectWifi(this, etSsid.getText().toString().trim()
-                        , etPwd.getText().toString().trim());
+//                if (TextUtils.isEmpty(etSsid.getText()) || TextUtils.isEmpty(etSsid.getText())) {
+//                    ToastUtils.showShort("WiFi名或密码不能为空");
+//                    return;
+//                }
+//                WifiUtils.getInstance().connectWifi(this, etSsid.getText().toString().trim()
+//                        , etPwd.getText().toString().trim());
+                WifiUtils.getInstance().connectWifi(this, "LUKE-OFFICE"
+                        , "luke2020");
                 break;
             default:
                 break;

@@ -149,7 +149,7 @@ public class WifiUtils {
                         e.printStackTrace();
                     }
                 }
-                // 7.1以下设备使用反射连接，以上使用ConnectivityManager
+                // 9.0以下设备使用反射连接，以上使用ConnectivityManager
                 if (Build.VERSION.SDK_INT < Q) {
                     wifiManager.disableNetwork(wifiManager.getConnectionInfo().getNetworkId());
                     int netId = wifiManager.addNetwork(getWifiConfig(ssid, password, !TextUtils.isEmpty(password)));
