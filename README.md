@@ -1,4 +1,4 @@
-# WiFiUtils [![](https://jitpack.io/v/eurigo/WifiUtils.svg)](https://jitpack.io/#eurigo/WifiUtils)
+# WiFiUtils [![](https://jitpack.io/v/eurigo/WiFiUtils.svg)](https://jitpack.io/#eurigo/WiFiUtils)
 
 ### Android WiFi工具类，兼容至Android 10.0，部分Api不支持9.0+
 ### 主要功能有打开、关闭、连接WIFI及热点。
