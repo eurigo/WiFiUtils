@@ -62,6 +62,8 @@ public class WifiUtils {
 
     private WifiManager wifiManager;
 
+    private ConnectivityManager connectivityManager;
+
     public WifiUtils() {
     }
 
@@ -353,8 +355,10 @@ public class WifiUtils {
      * android8.0以上开启手机热点
      */
     private void startTethering(Context context) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context
-                .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            connectivityManager = (ConnectivityManager) context
+                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         try {
             Class classOnStartTetheringCallback = Class.forName("android.net.ConnectivityManager$OnStartTetheringCallback");
             Method startTethering = connectivityManager.getClass()
@@ -377,8 +381,10 @@ public class WifiUtils {
      * android8.0以上关闭手机热点
      */
     private void stopTethering(Context context) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context
-                .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            connectivityManager = (ConnectivityManager) context
+                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         try {
             Method stopTethering = connectivityManager
                     .getClass().getDeclaredMethod("stopTethering", int.class);
@@ -458,8 +464,10 @@ public class WifiUtils {
         if (isGrantedWriteSettings(context)) {
             requestWriteSettings(context);
         }
-        ConnectivityManager connectivityManager = (ConnectivityManager)
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            connectivityManager = (ConnectivityManager) context
+                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         // 创建一个请求
         NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
                 .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
@@ -478,6 +486,7 @@ public class WifiUtils {
             @Override
             public void onAvailable(@NonNull Network network) {
                 Log.e(TAG, "onAvailable");
+                connectivityManager.bindProcessToNetwork(network);
             }
 
             @Override
