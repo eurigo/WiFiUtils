@@ -1,10 +1,11 @@
 package com.eurigo.wifilib;
 
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.content.Context.WIFI_SERVICE;
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.O;
 import static android.os.Build.VERSION_CODES.P;
-import static android.os.Build.VERSION_CODES.Q;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -13,24 +14,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.DhcpInfo;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
-import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiNetworkSpecifier;
 import android.os.Build;
-import android.os.PatternMatcher;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.core.content.ContextCompat;
 
 import com.eurigo.dx.stock.ProxyBuilder;
 
@@ -53,17 +47,6 @@ public class WifiUtils {
 
     private static final String TAG = "WifiUtils";
 
-    public static final int REQUEST_WRITE_SETTING_CODE = 1;
-    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
-
-    private final WifiReceiver wifiReceiver = new WifiReceiver();
-
-    private boolean isWifiReceiverRegister = false;
-
-    private WifiManager wifiManager;
-
-    private ConnectivityManager connectivityManager;
-
     public WifiUtils() {
     }
 
@@ -72,43 +55,65 @@ public class WifiUtils {
     }
 
     private static class SingletonHelper {
+        @SuppressLint("StaticFieldLeak")
         private final static WifiUtils INSTANCE = new WifiUtils();
     }
 
     /**
-     * wifi是否打开
+     * 请求修改系统设置Code
      */
-    public boolean isWifiEnable(Context context) {
+    public static final int REQUEST_WRITE_SETTING_CODE = 1;
+
+    private static final int CPU_COUNT = Runtime.getRuntime().availableProcessors();
+
+    private WifiReceiver wifiReceiver;
+
+    private boolean isWifiReceiverRegister = false;
+
+    private WifiManager wifiManager;
+
+    private ConnectivityManager connectivityManager;
+
+    private volatile Context mContext;
+
+    protected synchronized void init(Context mContext) {
+        this.mContext = mContext;
+    }
+
+    private WifiManager getWifiManager() {
         if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+            wifiManager = (WifiManager) mContext.getApplicationContext().getSystemService(WIFI_SERVICE);
         }
-        return wifiManager.isWifiEnabled();
+        return wifiManager;
+    }
+
+    private ConnectivityManager getConnectivityManager() {
+        if (connectivityManager == null) {
+            connectivityManager = (ConnectivityManager) mContext
+                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
+        return connectivityManager;
     }
 
     /**
-     * 打开Wifi, 不适用于Android 10.0+设备
+     * WiFi是否打开
      */
-    public void openWifi(Context context) throws RuntimeException {
-        if (Build.VERSION.SDK_INT >= Q) {
-            throw new RuntimeException("no support Android 10+ system");
-        }
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-        }
-        wifiManager.setWifiEnabled(true);
+    public boolean isWifiEnable() {
+        return getWifiManager().isWifiEnabled();
     }
 
     /**
-     * 关闭Wi-Fi, 不适用于Android 10.0+设备
+     * 打开WiFi
      */
-    public void closeWifi(Context context) throws RuntimeException {
-        if (Build.VERSION.SDK_INT >= Q) {
-            throw new RuntimeException("not support Android 10+ system!");
-        }
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-        }
-        wifiManager.setWifiEnabled(false);
+    public void openWifi() {
+        getWifiManager().setWifiEnabled(true);
+    }
+
+    /**
+     * 关闭WiFi
+     */
+    public void closeWifi() {
+        getWifiManager().setWifiEnabled(false);
     }
 
     /**
@@ -118,47 +123,36 @@ public class WifiUtils {
      * @param ssid     wifi名称
      * @param password wifi密码
      */
-    public void connectWifi(Context context, String ssid, String password) {
+    public void connectWifi(Activity activity, String ssid, String password) {
         // 9.0以下系统不支持关闭热点和WiFi共存
         if (Build.VERSION.SDK_INT <= P) {
-            if (isApEnable(context)) {
-                closeAp(context);
+            if (isApEnable()) {
+                closeAp(activity);
             }
-            // 打开WiFi
-            if (!isWifiEnable(context)) {
-                openWifi(context);
-            }
-        } else {
-            if (!isWifiEnable(context)) {
-                // 9.0以上设备需要手动打开WiFi
-                Toast.makeText(context, "请先打开WiFi开关", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        }
+        // 打开WiFi
+        if (!isWifiEnable()) {
+            openWifi();
         }
         // 需要等待WiFi开启再去连接
         new ThreadPoolExecutor(CPU_COUNT
                 , 2 * CPU_COUNT + 1
-                , 30
+                , 60
                 , TimeUnit.SECONDS
                 , new LinkedBlockingQueue<>()
                 , new ConnectWiFiThread()).execute(new Runnable() {
             @Override
             public void run() {
-                while (!wifiManager.isWifiEnabled()) {
+                while (!getWifiManager().isWifiEnabled()) {
                     try {
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                // 9.0以下设备使用反射连接，以上使用ConnectivityManager
-                if (Build.VERSION.SDK_INT < Q) {
-                    wifiManager.disableNetwork(wifiManager.getConnectionInfo().getNetworkId());
-                    int netId = wifiManager.addNetwork(getWifiConfig(ssid, password, !TextUtils.isEmpty(password)));
-                    wifiManager.enableNetwork(netId, true);
-                } else {
-                    connect(context, ssid, password);
-                }
+                getWifiManager().disableNetwork(getWifiManager().getConnectionInfo().getNetworkId());
+                int netId = getWifiManager().addNetwork(getWifiConfig(ssid, password, !TextUtils.isEmpty(password)));
+                getWifiManager().enableNetwork(netId, true);
             }
         });
     }
@@ -166,12 +160,9 @@ public class WifiUtils {
     /**
      * 便携热点是否开启
      */
-    public boolean isApEnable(Context context) {
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-        }
+    public boolean isApEnable() {
         try {
-            Method method = wifiManager.getClass().getDeclaredMethod("isWifiApEnabled");
+            Method method = getWifiManager().getClass().getDeclaredMethod("isWifiApEnabled");
             method.setAccessible(true);
             return (boolean) method.invoke(wifiManager);
         } catch (Throwable e) {
@@ -181,26 +172,23 @@ public class WifiUtils {
     }
 
     /**
-     * 关闭便携热点, Android 7.1版本可能存在问题
+     * 关闭便携热点
      */
-    public void closeAp(Context context) {
+    public void closeAp(Activity activity) {
         // 6.0+申请修改系统设置权限
         if (Build.VERSION.SDK_INT >= M) {
-            if (!isGrantedWriteSettings(context)) {
-                requestWriteSettings(context);
+            if (!isGrantedWriteSettings()) {
+                requestWriteSettings(activity);
             }
         }
         // 8.0以上的关闭方式不一样
         if (Build.VERSION.SDK_INT >= O) {
-            stopTethering(context);
+            stopTethering();
         } else {
-            if (wifiManager == null) {
-                wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-            }
             try {
-                Method method = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
+                Method method = getWifiManager().getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
                 method.setAccessible(true);
-                method.invoke(wifiManager, null, false);
+                method.invoke(getWifiManager(), null, false);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -208,33 +196,30 @@ public class WifiUtils {
     }
 
     /**
-     * 开启便携热点, Android 7.1版本可能存在问题
+     * 开启便携热点
      *
-     * @param context  上下文
+     * @param activity activity
      * @param ssid     便携热点SSID
      * @param password 便携热点密码
      */
-    public void openAp(Context context, String ssid, String password) {
+    public void openAp(Activity activity, String ssid, String password) {
         // 6.0+申请修改系统设置权限
         if (Build.VERSION.SDK_INT >= M) {
-            if (!isGrantedWriteSettings(context)) {
-                requestWriteSettings(context);
+            if (!isGrantedWriteSettings()) {
+                requestWriteSettings(activity);
             }
         }
         // 9.0以下版本不支持热点和WiFi共存
         if (Build.VERSION.SDK_INT <= P) {
             // 关闭WiFi
-            if (isWifiEnable(context)) {
-                wifiManager.setWifiEnabled(false);
+            if (isWifiEnable()) {
+                getWifiManager().setWifiEnabled(false);
             }
         }
         // 8.0以下的开启方式不一样
         if (Build.VERSION.SDK_INT >= O) {
-            startTethering(context);
+            startTethering();
         } else {
-            if (wifiManager == null) {
-                wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-            }
             try {
                 // 热点的配置类
                 WifiConfiguration config = new WifiConfiguration();
@@ -252,9 +237,9 @@ public class WifiUtils {
                 config.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
                 config.status = WifiConfiguration.Status.ENABLED;
                 // 调用反射打开热点
-                Method method = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, Boolean.TYPE);
+                Method method = getWifiManager().getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, Boolean.TYPE);
                 // 返回热点打开状态
-                method.invoke(wifiManager, config, true);
+                method.invoke(getWifiManager(), config, true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -263,19 +248,16 @@ public class WifiUtils {
 
     /**
      * 查看授权情况, 开启热点需要申请系统设置修改权限，如有必要，可提前申请
-     *
-     * @param context activity
      */
-
     @RequiresApi(api = Build.VERSION_CODES.M)
-    public void requestWriteSettings(Context context) {
-        if (isGrantedWriteSettings(context)) {
-            Log.e(TAG, "已授权修改系统设置权限");
+    public void requestWriteSettings(Activity activity) {
+        if (isGrantedWriteSettings()) {
+            Log.d(TAG, "已授权修改系统设置权限");
             return;
         }
         Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-        intent.setData(Uri.parse("package:" + context.getPackageName()));
-        ((Activity) context).startActivityForResult(intent, REQUEST_WRITE_SETTING_CODE);
+        intent.setData(Uri.parse("package:" + activity.getPackageName()));
+        activity.startActivityForResult(intent, REQUEST_WRITE_SETTING_CODE);
     }
 
     /**
@@ -285,15 +267,17 @@ public class WifiUtils {
      * {@code false}: no
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
-    public boolean isGrantedWriteSettings(Context context) {
-        return Settings.System.canWrite(context);
+    public boolean isGrantedWriteSettings() {
+        return Settings.System.canWrite(mContext);
     }
 
     /**
      * 是否连接着指定WiFi,通过已连接的SSID判断
+     *
+     * @param ssid 是否连接着wifi
      */
-    public boolean isConnectedSpecifySsid(Context context, String ssid) {
-        return ssid.equals(getSsid(context));
+    public boolean isConnectedTargetSsid(String ssid) {
+        return ssid.equals(getSsid());
     }
 
     /**
@@ -301,32 +285,37 @@ public class WifiUtils {
      *
      * @return 返回不含双引号的SSID
      */
-    public String getSsid(Context context) {
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
+    public String getSsid() {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
+            if (!isGrantedLocationPermission()) {
+                return "Version Android O+ get ssid need Location permission!";
+            }
         }
-        String ssid = wifiManager.getConnectionInfo().getSSID();
-        if (ssid.equals(WifiManager.UNKNOWN_SSID)) {
+        String ssid = getWifiManager().getConnectionInfo().getSSID();
+        if (TextUtils.isEmpty(ssid)) {
             return "";
         }
         if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
             return ssid.subSequence(1, ssid.length() - 1).toString();
         }
-        return wifiManager.getConnectionInfo().getSSID();
+        return ssid;
     }
 
     /**
-     * 获取WiFi列表
-     *
-     * @return WIFI列表
+     * @return 是否有位置权限
      */
-    public List<ScanResult> getWifiList(Context context) {
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-        }
+    private boolean isGrantedLocationPermission() {
+        return ContextCompat.checkSelfPermission(mContext, ACCESS_COARSE_LOCATION)
+                + ContextCompat.checkSelfPermission(mContext, ACCESS_FINE_LOCATION) == 0;
+    }
+
+    /**
+     * @return 获取WiFi列表
+     */
+    public List<ScanResult> getWifiList() {
         List<ScanResult> resultList = new ArrayList<>();
-        if (wifiManager != null && isWifiEnable(context)) {
-            resultList.addAll(wifiManager.getScanResults());
+        if (getWifiManager() != null && isWifiEnable()) {
+            resultList.addAll(getWifiManager().getScanResults());
         }
         return resultList;
     }
@@ -336,11 +325,8 @@ public class WifiUtils {
      *
      * @return ip地址
      */
-    public String getLocalIp(Context context) {
-        if (wifiManager == null) {
-            wifiManager = (WifiManager) context.getApplicationContext().getSystemService(WIFI_SERVICE);
-        }
-        DhcpInfo dhcpInfo = wifiManager.getDhcpInfo();
+    public String getLocalIp() {
+        DhcpInfo dhcpInfo = getWifiManager().getDhcpInfo();
         if (dhcpInfo != null) {
             int address = dhcpInfo.serverAddress;
             return ((address & 0xFF)
@@ -354,14 +340,10 @@ public class WifiUtils {
     /**
      * android8.0以上开启手机热点
      */
-    private void startTethering(Context context) {
-        if (connectivityManager == null) {
-            connectivityManager = (ConnectivityManager) context
-                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        }
+    private void startTethering() {
         try {
             Class classOnStartTetheringCallback = Class.forName("android.net.ConnectivityManager$OnStartTetheringCallback");
-            Method startTethering = connectivityManager.getClass()
+            Method startTethering = getConnectivityManager().getClass()
                     .getDeclaredMethod("startTethering", int.class, boolean.class, classOnStartTetheringCallback);
             Object proxy = ProxyBuilder.forClass(classOnStartTetheringCallback)
                     .handler(new InvocationHandler() {
@@ -370,7 +352,7 @@ public class WifiUtils {
                             return null;
                         }
                     }).build();
-            startTethering.invoke(connectivityManager, 0, false, proxy);
+            startTethering.invoke(getConnectivityManager(), 0, false, proxy);
         } catch (Exception e) {
             Log.e(TAG, "打开热点失败");
             e.printStackTrace();
@@ -380,15 +362,11 @@ public class WifiUtils {
     /**
      * android8.0以上关闭手机热点
      */
-    private void stopTethering(Context context) {
-        if (connectivityManager == null) {
-            connectivityManager = (ConnectivityManager) context
-                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        }
+    private void stopTethering() {
         try {
-            Method stopTethering = connectivityManager
+            Method stopTethering = getConnectivityManager()
                     .getClass().getDeclaredMethod("stopTethering", int.class);
-            stopTethering.invoke(connectivityManager, 0);
+            stopTethering.invoke(getConnectivityManager(), 0);
         } catch (Exception e) {
             Log.e(TAG, "关闭热点失败");
             e.printStackTrace();
@@ -413,7 +391,7 @@ public class WifiUtils {
 
         WifiConfiguration tempConfig = isExist(ssid);
         if (tempConfig != null) {
-            wifiManager.removeNetwork(tempConfig.networkId);
+            getWifiManager().removeNetwork(tempConfig.networkId);
         }
         if (isHasPws) {
             config.preSharedKey = "\"" + pws + "\"";
@@ -439,7 +417,7 @@ public class WifiUtils {
      */
     @SuppressLint("MissingPermission")
     private WifiConfiguration isExist(String ssid) {
-        List<WifiConfiguration> configs = wifiManager.getConfiguredNetworks();
+        List<WifiConfiguration> configs = getWifiManager().getConfiguredNetworks();
         if (configs == null) {
             Log.e(TAG, "isExist: null");
             return null;
@@ -450,50 +428,6 @@ public class WifiUtils {
             }
         }
         return null;
-    }
-
-    /**
-     * 这个方法连接上的WIFI ，只能在当前应用中使用，当应用被kill之后，连接的这个wifi会断开
-     *
-     * @param context  上下文
-     * @param ssid     wifi名称
-     * @param password wifi密码
-     */
-    @RequiresApi(api = Q)
-    private void connect(Context context, String ssid, String password) {
-        if (isGrantedWriteSettings(context)) {
-            requestWriteSettings(context);
-        }
-        if (connectivityManager == null) {
-            connectivityManager = (ConnectivityManager) context
-                    .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        }
-        // 创建一个请求
-        NetworkSpecifier specifier = new WifiNetworkSpecifier.Builder()
-                .setSsidPattern(new PatternMatcher(ssid, PatternMatcher.PATTERN_PREFIX))
-                .setWpa2Passphrase(password)
-                .build();
-        NetworkRequest request = new NetworkRequest.Builder()
-                // 创建的是WIFI网络。
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                // 网络不受限
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                // 信任网络，增加这个参数让设备连接wifi之后还联网。
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_TRUSTED)
-                .setNetworkSpecifier(specifier)
-                .build();
-        connectivityManager.requestNetwork(request, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(@NonNull Network network) {
-                Log.e(TAG, "onAvailable");
-                connectivityManager.bindProcessToNetwork(network);
-            }
-
-            @Override
-            public void onUnavailable() {
-                Log.e(TAG, "onUnavailable");
-            }
-        });
     }
 
     private static final class ConnectWiFiThread extends AtomicInteger
@@ -535,12 +469,13 @@ public class WifiUtils {
     /**
      * 注册Wifi广播
      */
-    public void registerWifiBroadcast(Context context, WifiReceiver.WifiStateListener wifiStateListener) {
+    public void registerWifiBroadcast(Activity activity, WifiReceiver.WifiStateListener wifiStateListener) {
         // 刚注册广播时会立即收到一条当前状态的广播
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
-        context.registerReceiver(wifiReceiver, filter);
+        wifiReceiver = new WifiReceiver();
+        activity.registerReceiver(wifiReceiver, filter);
         wifiReceiver.setWifiStateListener(wifiStateListener);
         isWifiReceiverRegister = true;
     }
@@ -548,11 +483,12 @@ public class WifiUtils {
     /**
      * 解除Wifi广播
      */
-    public void unregisterWifiBroadcast(Context context) {
+    public void unregisterWifiBroadcast(Activity activity) {
         if (isWifiReceiverRegister) {
+            activity.unregisterReceiver(wifiReceiver);
             wifiReceiver.setWifiStateListener(null);
-            context.unregisterReceiver(wifiReceiver);
+            wifiReceiver = null;
+            isWifiReceiverRegister = false;
         }
     }
-
 }

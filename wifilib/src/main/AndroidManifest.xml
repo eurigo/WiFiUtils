@@ -3,4 +3,15 @@
     package="com.eurigo.wifilib">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application>
+        <provider
+            android:name=".WiFiContentProvider"
+            android:authorities="eurigo.WifiUtilsContentProvider"
+            android:enabled="true"
+            android:exported="false"></provider>
+    </application>
+
 </manifest>

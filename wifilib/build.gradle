@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
 
@@ -41,12 +41,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'com.github.eurigo:dexmakerhook:1.0'
-//    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito:2.28.1'
-//    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1'
-//
-//    api 'org.mockito:mockito-core:2.28.2', { exclude group: 'net.bytebuddy' }
-//    implementation "com.crittercism.dexmaker:dexmaker:1.4"
-//    implementation "com.crittercism.dexmaker:dexmaker-dx:1.4"
-//    implementation 'com.crittercism.dexmaker:dexmaker-mockito:1.4'
 
 }
