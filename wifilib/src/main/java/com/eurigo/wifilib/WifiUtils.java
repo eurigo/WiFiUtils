@@ -491,4 +491,11 @@ public class WifiUtils {
             isWifiReceiverRegister = false;
         }
     }
+
+    public void release() {
+        mContext = null;
+        wifiManager = null;
+        connectivityManager = null;
+        wifiReceiver = null;
+    }
 }

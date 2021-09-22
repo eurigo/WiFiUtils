@@ -1,5 +1,7 @@
 package com.eurigo.wifiutils;
 
+import static com.blankj.utilcode.constant.PermissionConstants.LOCATION;
+
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.View;
@@ -9,8 +11,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.blankj.utilcode.constant.PermissionConstants;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.NetworkUtils;
+import com.blankj.utilcode.util.PermissionUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.eurigo.udplibrary.UdpUtils;
 import com.eurigo.wifilib.WifiReceiver;
 import com.eurigo.wifilib.WifiUtils;
@@ -32,10 +37,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private LogAdapter mAdapter;
 
-    private EditText etSsid, etPwd;
     private MaterialButton btnAp, btnWiFi;
-
-    private static final String WIFI_NAME = "lkmw16310929400007";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,8 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnAp.setOnClickListener(this);
         btnWiFi.setOnClickListener(this);
         findViewById(R.id.btn_connect).setOnClickListener(this);
-        etSsid = findViewById(R.id.et_wifi_ssid);
-        etPwd = findViewById(R.id.et_wifi_pwd);
+        EditText etSsid = findViewById(R.id.et_wifi_ssid);
+        EditText etPwd = findViewById(R.id.et_wifi_pwd);
         etSsid.setText(WIFI_SSID);
         etPwd.setText(WIFI_PWD);
         btnAp.setText(WifiUtils.getInstance().isApEnable() ? "关闭热点" : "打开热点");
@@ -74,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LogUtils.e(networkType.name(), WifiUtils.getInstance().getSsid()
                 , NetworkUtils.getSSID());
         if (networkType.equals(NetworkUtils.NetworkType.NETWORK_WIFI)
-                && NetworkUtils.getSSID().equals(WIFI_NAME)) {
+                && NetworkUtils.getSSID().equals(WIFI_SSID)) {
             UdpUtils.getInstance().sendBroadcastMessageInAndroidHotspot("good!");
         }
     }
@@ -85,12 +87,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (WifiUtils.getInstance().isRegisterWifiBroadcast()) {
             WifiUtils.getInstance().registerWifiBroadcast(this, this);
         }
+        getPermission();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         WifiUtils.getInstance().unregisterWifiBroadcast(this);
+        WifiUtils.getInstance().release();
+    }
+
+    private void getPermission() {
+        PermissionUtils.permission(PermissionConstants.getPermissions(LOCATION))
+                .callback(new PermissionUtils.SimpleCallback() {
+                    @Override
+                    public void onGranted() {
+                        ToastUtils.showShort("获取WIFI名称需要位置权限");
+                    }
+
+                    @Override
+                    public void onDenied() {
+
+                    }
+                })
+                .request();
     }
 
     private void showLog(String data) {
