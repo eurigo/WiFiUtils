@@ -1,8 +1,10 @@
 package com.eurigo.wifiutils;
 
+import static android.os.Build.VERSION_CODES.P;
 import static com.blankj.utilcode.constant.PermissionConstants.LOCATION;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -21,10 +23,7 @@ import com.eurigo.wifilib.WifiReceiver;
 import com.eurigo.wifilib.WifiUtils;
 import com.google.android.material.button.MaterialButton;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener
         , WifiReceiver.WifiStateListener, NetworkUtils.OnNetworkStatusChangedListener {
@@ -78,12 +77,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (networkType.equals(NetworkUtils.NetworkType.NETWORK_WIFI)
                 && NetworkUtils.getSSID().equals(WIFI_SSID)) {
             UdpUtils.getInstance().sendBroadcastMessageInAndroidHotspot("good!");
+            showLog(WifiUtils.getInstance().getSsid());
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        btnAp.setText(WifiUtils.getInstance().isApEnable() ? "关闭热点" : "打开热点");
+        btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? "关闭WIFI" : "打开WIFI");
+
         if (WifiUtils.getInstance().isRegisterWifiBroadcast()) {
             WifiUtils.getInstance().registerWifiBroadcast(this, this);
         }
@@ -117,9 +120,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
-                String time = format.format(new Date(System.currentTimeMillis()));
-                mAdapter.addDataAndScroll(time + "\n" + data);
+                mAdapter.addDataAndScroll(data);
             }
         });
     }
@@ -130,20 +131,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.btn_use_ap:
                 if ("打开热点".contentEquals(btnAp.getText())) {
+                    if (Build.VERSION.SDK_INT < P && WifiUtils.getInstance().isWifiEnable()) {
+                        WifiUtils.getInstance().closeWifi();
+                    }
                     WifiUtils.getInstance().openAp(this, AP_SSID, AP_PWD);
-                    btnAp.setText("关闭热点");
                 } else {
-                    WifiUtils.getInstance().closeAp(this);
-                    btnAp.setText("打开热点");
+                    if (WifiUtils.getInstance().isApEnable()) {
+                        WifiUtils.getInstance().closeAp(this);
+                    }
                 }
                 break;
             case R.id.btn_use_wifi:
                 if ("打开WiFi".contentEquals(btnWiFi.getText())) {
-                    WifiUtils.getInstance().openWifi();
-                    btnWiFi.setText("关闭WiFi");
+                    if (WifiUtils.getInstance().isApEnable()) {
+                        WifiUtils.getInstance().closeAp(this);
+                        WifiUtils.getInstance().openWifi();
+                    }
                 } else {
-                    WifiUtils.getInstance().closeWifi();
-                    btnWiFi.setText("打开WiFi");
+                    if (WifiUtils.getInstance().isWifiEnable()) {
+                        WifiUtils.getInstance().closeWifi();
+                    }
                 }
                 break;
             case R.id.btn_connect:

@@ -6,7 +6,10 @@ import com.chad.library.adapter.base.viewholder.BaseViewHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Eurigo
@@ -25,7 +28,9 @@ public class LogAdapter extends BaseQuickAdapter<String, BaseViewHolder> {
     }
 
     public void addDataAndScroll(@NotNull String data) {
-        addData(data);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA);
+        String time = format.format(new Date(System.currentTimeMillis()));
+        addData(time + "\n" + data);
         getRecyclerView().scrollToPosition(getData().size() - 1);
     }
 }
