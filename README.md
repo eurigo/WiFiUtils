@@ -21,10 +21,9 @@ allprojects {
 ```
   
 + 在app模块下的`build.gradle`文件中加入
- # LastRelease [![](https://jitpack.io/v/eurigo/WiFiUtils.svg)](https://jitpack.io/#eurigo/WiFiUtils)
 ```
 dependencies {
-    implementation 'com.github.eurigo:WiFiUtils:LastRealese'
+    implementation 'com.github.eurigo:WiFiUtils:1.1.2'
 }
 ```
 
