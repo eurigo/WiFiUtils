@@ -7,7 +7,7 @@
     <application>
         <provider
             android:name=".WiFiContentProvider"
-            android:authorities="eurigo.WifiUtilsContentProvider"
+            android:authorities="${applicationId}.WifiUtilsContentProvider"
             android:enabled="true"
             android:exported="false" />
     </application>
