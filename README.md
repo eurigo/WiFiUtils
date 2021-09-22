@@ -1,6 +1,7 @@
 # WiFiUtils [![](https://jitpack.io/v/eurigo/WiFiUtils.svg)](https://jitpack.io/#eurigo/WiFiUtils)
 
-### Android WiFi工具类，兼容至Android 10.0，部分Api不支持9.0+
+### Android WiFi工具类，兼容Android 11+，
+
 ### 主要功能有打开、关闭、连接WIFI及热点。
 
 + [Github](https://github.com/eurigo/UDPUtils)
@@ -41,36 +42,68 @@ dependencies {
 
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 />
 ```
 
 ### API
-+ #### 打开WiFi，不支持Android 10及以上设备
+
++ #### 打开WiFi
 ```
-WifiUtils.getInstance().openWifi(Context context);
-```
-+ #### 关闭WiFi，不支持Android 10及以上设备
-```
-WifiUtils.getInstance().closeWifi(Context context);
-```
-+ #### 连接WiFi，7.0以上不同OS界面可能会不同
-```
-WifiUtils.getInstance().connectWifi(Context context, String ssid, String password);
+WifiUtils.getInstance().openWifi();
 ```
 
-+ #### 打开热点，Android 7.1版本可能存在问题
++ #### 关闭WiFi
 ```
-WifiUtils.getInstance().openAp(Context Context context, String ssid, String password);
+WifiUtils.getInstance().closeWifi();
 ```
-+ #### 关闭热点，Android 7.1版本可能存在问题
+
++ #### 连接WiFi
 ```
-WifiUtils.getInstance().closeAp(Context context);
+WifiUtils.getInstance().connectWifi(Activity activity, String ssid, String password);
 ```
+
++ #### 打开热点
+```
+WifiUtils.getInstance().openAp(Activity activity, String ssid, String password);
+```
+
++ #### 关闭热点
+
+```
+WifiUtils.getInstance().closeAp(Activity activity);
+```
+
 + #### 注册Wifi广播
+
 ```
-WifiUtils.getInstance().registerWifiBroadcast(Context context, WifiStateListener wifiStateListener);
+WifiUtils.getInstance().registerWifiBroadcast(Activity activity, WifiStateListener wifiStateListener);
 ```
-+ #### 获取当前WiFi名称
+
+### 其他API
+
++ #### 获取当前WiFi名称(Android8.0以上必需定位权限)
+
 ```
-WifiUtils.getInstance().getSsid(Context context);
+WifiUtils.getInstance().getSsid();
+```
+
++ #### 获取当前IP地址
+
+```
+WifiUtils.getInstance().getLocalIp();
+```
+
++ #### 获取当前IP地址
+
+```
+WifiUtils.getInstance().getLocalIp();
+```
+
++ #### 获取WIFI列表
+
+```
+WifiUtils.getInstance().getWifiList();
 ```
