@@ -32,8 +32,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String TAG = "MainActivity";
     private static final String AP_SSID = "TEST_AP";
     private static final String AP_PWD = "TEST_PWD";
-    private static final String WIFI_SSID = "lkmw16310929400007";
-    private static final String WIFI_PWD = "lkmw16310929400007";
+    private static final String WIFI_SSID = "LUKE-DEMO";
+    private static final String WIFI_PWD = "luke2020";
 
     private LogAdapter mAdapter;
 

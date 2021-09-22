@@ -9,6 +9,7 @@ android {
     defaultConfig {
         applicationId "com.eurigo.wifiutils"
         minSdkVersion 21
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
