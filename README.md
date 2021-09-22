@@ -71,13 +71,11 @@ WifiUtils.getInstance().openAp(Activity activity, String ssid, String password);
 ```
 
 + #### 关闭热点
-
 ```
 WifiUtils.getInstance().closeAp(Activity activity);
 ```
 
 + #### 注册Wifi广播
-
 ```
 WifiUtils.getInstance().registerWifiBroadcast(Activity activity, WifiStateListener wifiStateListener);
 ```
@@ -85,25 +83,16 @@ WifiUtils.getInstance().registerWifiBroadcast(Activity activity, WifiStateListen
 ### 其他API
 
 + #### 获取当前WiFi名称(Android8.0以上必需定位权限)
-
 ```
 WifiUtils.getInstance().getSsid();
 ```
 
 + #### 获取当前IP地址
-
-```
-WifiUtils.getInstance().getLocalIp();
-```
-
-+ #### 获取当前IP地址
-
 ```
 WifiUtils.getInstance().getLocalIp();
 ```
 
 + #### 获取WIFI列表
-
 ```
 WifiUtils.getInstance().getWifiList();
 ```
