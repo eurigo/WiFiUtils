@@ -1,6 +1,6 @@
 # WiFiUtils [![](https://jitpack.io/v/eurigo/WiFiUtils.svg)](https://jitpack.io/#eurigo/WiFiUtils)
 
-### Android WiFi工具类，兼容Android 11+，
+### Android WiFi工具类，兼容Android 11
 
 ### 主要功能有打开、关闭、连接WIFI及热点。
 
@@ -23,7 +23,7 @@ allprojects {
 + 在app模块下的`build.gradle`文件中加入
 ```
 dependencies {
-    implementation 'com.github.eurigo:WiFiUtils:1.1.0'
+    implementation 'com.github.eurigo:WiFiUtils:1.1.2'
 }
 ```
 
