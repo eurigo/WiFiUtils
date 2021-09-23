@@ -177,7 +177,7 @@ public class WifiUtils {
     public void closeAp(Activity activity) {
         // 6.0+申请修改系统设置权限
         if (Build.VERSION.SDK_INT >= M) {
-            if (!isGrantedWriteSettings()) {
+            if (!isGrantedWriteSettings(activity)) {
                 requestWriteSettings(activity);
             }
         }
@@ -205,7 +205,7 @@ public class WifiUtils {
     public void openAp(Activity activity, String ssid, String password) {
         // 6.0+申请修改系统设置权限
         if (Build.VERSION.SDK_INT >= M) {
-            if (!isGrantedWriteSettings()) {
+            if (!isGrantedWriteSettings(activity)) {
                 requestWriteSettings(activity);
             }
         }
@@ -251,7 +251,7 @@ public class WifiUtils {
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void requestWriteSettings(Activity activity) {
-        if (isGrantedWriteSettings()) {
+        if (isGrantedWriteSettings(activity)) {
             Log.d(TAG, "已授权修改系统设置权限");
             return;
         }
@@ -267,8 +267,8 @@ public class WifiUtils {
      * {@code false}: no
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
-    public boolean isGrantedWriteSettings() {
-        return Settings.System.canWrite(mContext);
+    public boolean isGrantedWriteSettings(Context context) {
+        return Settings.System.canWrite(context);
     }
 
     /**
