@@ -4,12 +4,4 @@
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <application>
-        <provider
-            android:name=".WiFiContentProvider"
-            android:authorities="${applicationId}.WifiUtilsContentProvider"
-            android:enabled="true"
-            android:exported="false" />
-    </application>
-
 </manifest>

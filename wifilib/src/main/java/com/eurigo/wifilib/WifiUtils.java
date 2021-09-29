@@ -74,13 +74,16 @@ public class WifiUtils {
 
     private ConnectivityManager connectivityManager;
 
-    private volatile Context mContext;
+    private Context mContext;
 
-    protected synchronized void init(Context mContext) {
+    public void init(Context mContext) {
         this.mContext = mContext;
     }
 
     private WifiManager getWifiManager() {
+        if (mContext == null) {
+            throw new RuntimeException("please init first");
+        }
         if (wifiManager == null) {
             wifiManager = (WifiManager) mContext.getApplicationContext().getSystemService(WIFI_SERVICE);
         }
@@ -88,6 +91,9 @@ public class WifiUtils {
     }
 
     private ConnectivityManager getConnectivityManager() {
+        if (mContext == null) {
+            throw new RuntimeException("please init first");
+        }
         if (connectivityManager == null) {
             connectivityManager = (ConnectivityManager) mContext
                     .getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -492,10 +498,14 @@ public class WifiUtils {
         }
     }
 
+    /**
+     * 资源释放
+     */
     public void release() {
         mContext = null;
         wifiManager = null;
         connectivityManager = null;
         wifiReceiver = null;
+        System.gc();
     }
 }
