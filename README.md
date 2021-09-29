@@ -47,6 +47,14 @@ dependencies {
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 />
 ```
++ ### 初始化
+```
+WifiUtils.getInstance().init(Context context);
+```
++ ### 不再需要时release
+```
+WifiUtils.getInstance().release();
+```
 
 ### API
 
