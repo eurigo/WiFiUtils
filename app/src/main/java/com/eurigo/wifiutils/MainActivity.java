@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        WifiUtils.getInstance().init(this);
         initView();
         NetworkUtils.registerNetworkStatusChangedListener(this);
     }
@@ -88,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? "关闭WIFI" : "打开WIFI");
 
         if (WifiUtils.getInstance().isRegisterWifiBroadcast()) {
-            WifiUtils.getInstance().registerWifiBroadcast(this, this);
+            WifiUtils.getInstance().registerWifiBroadcast(this);
         }
         getPermission();
     }
@@ -96,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        WifiUtils.getInstance().unregisterWifiBroadcast(this);
+        WifiUtils.getInstance().unregisterWifiBroadcast();
         WifiUtils.getInstance().release();
     }
 

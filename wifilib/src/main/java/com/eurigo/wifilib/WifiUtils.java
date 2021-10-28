@@ -68,8 +68,6 @@ public class WifiUtils {
 
     private WifiReceiver wifiReceiver;
 
-    private boolean isWifiReceiverRegister = false;
-
     private WifiManager wifiManager;
 
     private ConnectivityManager connectivityManager;
@@ -469,32 +467,30 @@ public class WifiUtils {
     }
 
     public boolean isRegisterWifiBroadcast() {
-        return isWifiReceiverRegister;
+        return wifiReceiver != null;
     }
 
     /**
      * 注册Wifi广播
      */
-    public void registerWifiBroadcast(Activity activity, WifiReceiver.WifiStateListener wifiStateListener) {
+    public void registerWifiBroadcast(WifiReceiver.WifiStateListener wifiStateListener) {
         // 刚注册广播时会立即收到一条当前状态的广播
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction("android.net.wifi.WIFI_AP_STATE_CHANGED");
         wifiReceiver = new WifiReceiver();
-        activity.registerReceiver(wifiReceiver, filter);
+        mContext.registerReceiver(wifiReceiver, filter);
         wifiReceiver.setWifiStateListener(wifiStateListener);
-        isWifiReceiverRegister = true;
     }
 
     /**
      * 解除Wifi广播
      */
-    public void unregisterWifiBroadcast(Activity activity) {
-        if (isWifiReceiverRegister) {
-            activity.unregisterReceiver(wifiReceiver);
+    public void unregisterWifiBroadcast() {
+        if (isRegisterWifiBroadcast()) {
+            mContext.unregisterReceiver(wifiReceiver);
             wifiReceiver.setWifiStateListener(null);
             wifiReceiver = null;
-            isWifiReceiverRegister = false;
         }
     }
 
