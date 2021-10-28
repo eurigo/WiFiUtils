@@ -23,7 +23,7 @@ allprojects {
 + 在app模块下的`build.gradle`文件中加入
 ```
 dependencies {
-    implementation 'com.github.eurigo:WiFiUtils:1.1.3'
+    implementation 'com.github.eurigo:WiFiUtils:1.1.4'
 }
 ```
 
@@ -46,6 +46,14 @@ dependencies {
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 />
+```
++ ### 初始化
+```
+WifiUtils.getInstance().init(Context context);
+```
++ ### 不再需要时release
+```
+WifiUtils.getInstance().release();
 ```
 
 ### API
