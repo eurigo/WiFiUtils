@@ -1,6 +1,6 @@
 # WiFiUtils [![](https://jitpack.io/v/eurigo/WiFiUtils.svg)](https://jitpack.io/#eurigo/WiFiUtils)
 
-### Android WiFi工具类，兼容Android 11
+### Android WiFi工具类，兼容Android 11, 理论支持Android 12(未做兼容性测试)
 
 ### 主要功能有打开、关闭、连接WIFI及热点。
 
