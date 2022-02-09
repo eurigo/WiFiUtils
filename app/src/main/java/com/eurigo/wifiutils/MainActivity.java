@@ -13,12 +13,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.blankj.utilcode.constant.PermissionConstants;
-import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.PermissionUtils;
-import com.blankj.utilcode.util.ToastUtils;
-import com.eurigo.udplibrary.UdpUtils;
 import com.eurigo.wifilib.WifiReceiver;
 import com.eurigo.wifilib.WifiUtils;
 import com.google.android.material.button.MaterialButton;
@@ -28,11 +24,15 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener
         , WifiReceiver.WifiStateListener, NetworkUtils.OnNetworkStatusChangedListener {
 
-    private static final String TAG = "MainActivity";
     private static final String AP_SSID = "TEST_AP";
     private static final String AP_PWD = "TEST_PWD";
-    private static final String WIFI_SSID = "LUKE-DEMO";
-    private static final String WIFI_PWD = "luke2020";
+    private static final String WIFI_SSID = "WIFI_SSID";
+    private static final String WIFI_PWD = "WIFI_PWD";
+
+    private static final String CLOSE_WIFI = "关闭WiFi";
+    private static final String OPEN_WIFI = "打开WiFi";
+    private static final String CLOSE_AP = "关闭热点";
+    private static final String OPEN_AP = "打开热点";
 
     private LogAdapter mAdapter;
 
@@ -57,8 +57,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EditText etPwd = findViewById(R.id.et_wifi_pwd);
         etSsid.setText(WIFI_SSID);
         etPwd.setText(WIFI_PWD);
-        btnAp.setText(WifiUtils.getInstance().isApEnable() ? "关闭热点" : "打开热点");
-        btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? "关闭WiFi" : "打开WiFi");
+        btnAp.setText(WifiUtils.getInstance().isApEnable() ? CLOSE_AP : CLOSE_WIFI);
+        btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? CLOSE_WIFI : OPEN_WIFI);
 
         RecyclerView mRecyclerView = findViewById(R.id.rcv_ap_log);
         mAdapter = new LogAdapter(new ArrayList<>());
@@ -68,27 +68,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onDisconnected() {
-        WifiUtils.getInstance().getSsid();
+
     }
 
     @Override
     public void onConnected(NetworkUtils.NetworkType networkType) {
-        LogUtils.e(networkType.name(), WifiUtils.getInstance().getSsid()
-                , NetworkUtils.getSSID());
-        if (networkType.equals(NetworkUtils.NetworkType.NETWORK_WIFI)
-                && NetworkUtils.getSSID().equals(WIFI_SSID)) {
-            UdpUtils.getInstance().sendBroadcastMessageInAndroidHotspot("good!");
-            showLog(WifiUtils.getInstance().getSsid());
-        }
+        showLog("type: " + networkType.name());
+        showLog("ssid: " + WifiUtils.getInstance().getSsid());
+        showLog("net ssid: " + NetworkUtils.getSSID());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        btnAp.setText(WifiUtils.getInstance().isApEnable() ? "关闭热点" : "打开热点");
-        btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? "关闭WIFI" : "打开WIFI");
-
-        if (WifiUtils.getInstance().isRegisterWifiBroadcast()) {
+        btnAp.setText(WifiUtils.getInstance().isApEnable() ? CLOSE_AP : OPEN_AP);
+        btnWiFi.setText(WifiUtils.getInstance().isWifiEnable() ? CLOSE_WIFI : OPEN_WIFI);
+        if (!WifiUtils.getInstance().isRegisterWifiBroadcast()) {
             WifiUtils.getInstance().registerWifiBroadcast(this);
         }
         getPermission();
@@ -102,16 +97,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void getPermission() {
-        PermissionUtils.permission(PermissionConstants.getPermissions(LOCATION))
+        if (PermissionUtils.isGranted(LOCATION)) {
+            return;
+        }
+        PermissionUtils.permission(LOCATION)
                 .callback(new PermissionUtils.SimpleCallback() {
                     @Override
                     public void onGranted() {
-                        ToastUtils.showShort("获取WIFI名称需要位置权限");
                     }
 
                     @Override
                     public void onDenied() {
-
                     }
                 })
                 .request();
@@ -126,12 +122,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("NonConstantResourceId")
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_use_ap:
-                if ("打开热点".contentEquals(btnAp.getText())) {
+                if (OPEN_AP.contentEquals(btnAp.getText())) {
                     if (Build.VERSION.SDK_INT < P && WifiUtils.getInstance().isWifiEnable()) {
                         WifiUtils.getInstance().closeWifi();
                     }
@@ -143,11 +139,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 break;
             case R.id.btn_use_wifi:
-                if ("打开WiFi".contentEquals(btnWiFi.getText())) {
-                    if (WifiUtils.getInstance().isApEnable()) {
+                if (OPEN_WIFI.contentEquals(btnWiFi.getText())) {
+                    if (Build.VERSION.SDK_INT < P && WifiUtils.getInstance().isApEnable()) {
                         WifiUtils.getInstance().closeAp(this);
-                        WifiUtils.getInstance().openWifi();
                     }
+                    WifiUtils.getInstance().openWifi();
                 } else {
                     if (WifiUtils.getInstance().isWifiEnable()) {
                         WifiUtils.getInstance().closeWifi();
@@ -165,25 +161,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onWifiOpen() {
         showLog("WiFi已打开");
-        btnWiFi.setText("关闭WiFi");
+        btnWiFi.setText(CLOSE_WIFI);
     }
 
     @Override
     public void onWifiClose() {
         showLog("WiFi已关闭");
-        btnWiFi.setText("打开WiFi");
+        btnWiFi.setText(OPEN_WIFI);
     }
 
     @Override
     public void onHotpotOpen() {
         showLog("热点已打开");
-        btnAp.setText("关闭热点");
+        btnAp.setText(CLOSE_AP);
     }
 
     @Override
     public void onHotpotClose() {
         showLog("热点已关闭");
-        btnAp.setText("打开热点");
+        btnAp.setText(OPEN_AP);
     }
 
     @Override
