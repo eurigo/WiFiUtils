@@ -23,7 +23,7 @@ allprojects {
 + 在app模块下的`build.gradle`文件中加入
 ```
 dependencies {
-    implementation 'com.github.eurigo:WiFiUtils:1.1.5'
+    implementation 'com.github.eurigo:WiFiUtils:1.1.6'
 }
 ```
 
